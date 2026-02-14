@@ -1,3 +1,9 @@
 {
-  "extends": ["next/core-web-vitals"]
+  "root": true,
+  "extends": ["eslint:recommended"],
+  "env": {
+    "es2022": true,
+    "node": true
+  },
+  "ignorePatterns": [".next/", "node_modules/", "coverage/"]
 }
