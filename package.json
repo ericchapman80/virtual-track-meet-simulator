@@ -6,16 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit",
-    "lint": "next lint",
+    "lint": "next lint && tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
@@ -44,9 +41,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-    "typescript": "^5.5.3"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }
