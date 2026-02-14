@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DEV_NEON_DB_DATABASE_URL")
+}
+
+model Team {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  athletes  Athlete[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Athlete {
+  id           String         @id @default(cuid())
+  firstName    String
+  lastName     String
+  graduationYr Int?
+  teamId       String?
+  team         Team?          @relation(fields: [teamId], references: [id])
+  entries           MeetEntry[]
+  performances      Performance[]
+  simulationResults SimulationResult[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Event {
+  id           String         @id @default(cuid())
+  code         String         @unique
+  name         String
+  isTimed      Boolean        @default(true)
+  performances      Performance[]
+  entries           MeetEntry[]
+  simulationResults SimulationResult[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Performance {
+  id          String    @id @default(cuid())
+  athleteId   String
+  athlete     Athlete   @relation(fields: [athleteId], references: [id])
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id])
+  mark        Float
+  occurredAt  DateTime
+  wind        Float?
+  source      String?
+  externalRef String?
+  createdAt   DateTime  @default(now())
+
+  @@index([athleteId, eventId])
+}
+
+model Meet {
+  id             String          @id @default(cuid())
+  name           String
+  meetDate       DateTime
+  entries        MeetEntry[]
+  simulationRuns SimulationRun[]
+  createdAt      DateTime        @default(now())
+}
+
+model MeetEntry {
+  id         String   @id @default(cuid())
+  meetId      String
+  meet       Meet     @relation(fields: [meetId], references: [id])
+  athleteId   String
+  athlete    Athlete  @relation(fields: [athleteId], references: [id])
+  eventId     String
+  event      Event    @relation(fields: [eventId], references: [id])
+  seedMark   Float?
+  lane       Int?
+
+  @@unique([meetId, athleteId, eventId])
+}
+
+model SimulationRun {
+  id          String             @id @default(cuid())
+  meetId       String
+  meet        Meet               @relation(fields: [meetId], references: [id])
+  iterations  Int
+  createdAt   DateTime           @default(now())
+  results     SimulationResult[]
+}
+
+model SimulationResult {
+  id                String        @id @default(cuid())
+  runId             String
+  run               SimulationRun @relation(fields: [runId], references: [id])
+  athleteId         String
+  athlete           Athlete       @relation(fields: [athleteId], references: [id])
+  eventId           String
+  event             Event         @relation(fields: [eventId], references: [id])
+  winProbability    Float
+  podiumProbability Float
+  expectedPlace     Float
+  expectedMark      Float
+
+  @@unique([runId, athleteId, eventId])
+}
