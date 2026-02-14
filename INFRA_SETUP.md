@@ -15,32 +15,11 @@ Example:
 postgresql://USER:PASSWORD@HOST:5432/virtual_track_meet?sslmode=require
 ```
 
-
-## 1b) Neon integration options (auth + env var prefix)
-
-If Neon asks for an **auth parameter** toggle and it defaults to `false`, that is fine for this project.
-
-- Keep it `false` unless you have a specific reason to require authenticated proxy parameters in your connection string.
-- Prisma works with a standard Postgres URL (`postgresql://...?...sslmode=require`) and does not need an extra Neon auth query flag for this setup.
-
-If Neon asks for a **custom prefix** for auto-generated environment variables:
-
-- Recommended prefix: `NEON_DB` (clear and project-specific).
-- This typically creates variables like `NEON_DB_URL` (and provider-specific companion vars).
-- In this repo, use `DEV_NEON_DB_DATABASE_URL` directly for Prisma/Next.js runtime usage in this repo.
-
-Example mapping:
-
-```bash
-DEV_NEON_DB_DATABASE_URL=$NEON_DB_URL
-```
-
 ## 2) Configure local environment
 
 ```bash
 cp .env.example .env
 ```
-
 Set `DEV_NEON_DB_DATABASE_URL` in `.env`.
 
 ## 3) Initialize Prisma schema in DB
@@ -120,6 +99,10 @@ When ready later, add these two more entries (same variable name, different env 
 - `DEV_NEON_DB_DATABASE_URL` (Production) -> your production Neon URL
 
 Important: Vercel supports the same variable name with different environment scopes. Keep the name `DEV_NEON_DB_DATABASE_URL` for all three environments (or rename later with a planned migration).
+
+2. In Vercel Project Settings > Environment Variables, add:
+   - `DATABASE_URL` (same Neon connection string)
+3. Redeploy project after adding env vars.
 
 ## 5) Production-safe migration command
 

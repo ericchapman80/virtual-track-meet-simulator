@@ -69,18 +69,6 @@ Before importing data from third-party providers, verify terms of service and ro
 - Vercel production URL: `https://virtual-track-meet-simulator.vercel.app`
 - Health check URL: `https://virtual-track-meet-simulator.vercel.app/api/health`
 
-## Security note on Vercel info in README
-
-Sharing the **project name** and **public deployment URL** in a README is generally low-risk because these are already discoverable once a site is public.
-
-Do **not** commit any sensitive deployment material, including:
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` values from private automation contexts
-- webhook signing secrets
-- environment variable values (`DEV_NEON_DB_DATABASE_URL`, API keys, secrets)
-
-Keep secrets in Vercel Environment Variables and GitHub Secrets only.
-
 ## Deploy readiness
 
 - `postinstall` runs `prisma generate` automatically for local/CI/Vercel installs.
@@ -102,7 +90,7 @@ This gives you a pre-merge quality gate before changes hit `main`.
 
 If a Vercel deployment fails, check these first:
 
-1. **Environment variables**: `DEV_NEON_DB_DATABASE_URL` must be set in Vercel project settings.
+1. **Environment variables**: `DATABASE_URL` must be set in Vercel project settings.
 2. **Node version**: the project expects Node 20+ (`package.json` `engines.node`).
 3. **Prisma generation**: `postinstall` runs `prisma generate`; if this fails, verify install logs and lockfile state.
 4. **Type checking scope**: test files are excluded from Next.js type checking to avoid build-time failures from test-only dependencies.
