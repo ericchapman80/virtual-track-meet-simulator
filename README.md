@@ -23,7 +23,7 @@ npm install
 cp .env.example .env
 ```
 
-3. Configure `DATABASE_URL` in `.env`.
+3. Configure `DEV_NEON_DB_DATABASE_URL` in `.env` (matching Vercel's Neon integration variable name).
 
 4. Generate Prisma client and run migrations:
 
