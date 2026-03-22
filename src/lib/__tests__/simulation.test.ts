@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { runSprintMonteCarlo } from "@/lib/simulation";
+import { runCompetitionMonteCarlo, runSprintMonteCarlo } from "@/lib/simulation";
 
 describe("runSprintMonteCarlo", () => {
   it("throws when fewer than two entries are provided", () => {
@@ -37,5 +37,20 @@ describe("runSprintMonteCarlo", () => {
     expect(results).toHaveLength(2);
     expect(results[0].athleteName).toBe("A");
     randomSpy.mockRestore();
+  });
+
+  it("supports field events where higher marks win", () => {
+    const results = runCompetitionMonteCarlo(
+      [
+        { athleteName: "A", seedPerformance: 40, actualPerformance: 42, higherIsBetter: true },
+        { athleteName: "B", seedPerformance: 39, actualPerformance: 39.5, higherIsBetter: true },
+        { athleteName: "C", seedPerformance: 38, actualPerformance: 38.25, higherIsBetter: true },
+      ],
+      200,
+    );
+
+    expect(results[0].athleteName).toBe("A");
+    expect(results[0].winProbability).toBe(1);
+    expect(results[0].averagePerformance).toBe(42);
   });
 });

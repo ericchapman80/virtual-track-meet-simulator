@@ -1,4 +1,4 @@
-import { SimulationOutcome, SprintEntry } from "@/types/simulation";
+import { CompetitionEntry, CompetitionOutcome, SimulationOutcome, SprintEntry } from "@/types/simulation";
 
 type WorkingStat = {
   athleteName: string;
@@ -6,8 +6,33 @@ type WorkingStat = {
   wins: number;
   podiums: number;
   placeSum: number;
-  timeSum: number;
+  performanceSum: number;
+  placeCounts: number[];
+  performances: number[];
 };
+
+function percentile(sortedValues: number[], fraction: number) {
+  if (sortedValues.length === 0) {
+    return 0;
+  }
+
+  const index = Math.max(0, Math.min(sortedValues.length - 1, Math.floor((sortedValues.length - 1) * fraction)));
+  return sortedValues[index];
+}
+
+function mostLikelyPlace(placeCounts: number[]) {
+  let bestPlace = 1;
+  let bestCount = -1;
+
+  placeCounts.forEach((count, index) => {
+    if (count > bestCount) {
+      bestCount = count;
+      bestPlace = index + 1;
+    }
+  });
+
+  return bestPlace;
+}
 
 function randomNormal(mean: number, stdDev: number): number {
   const u = 1 - Math.random();
@@ -24,7 +49,16 @@ function entryTime(entry: SprintEntry): number {
   return Math.max(0.01, randomNormal(entry.seedTime, entry.stdDev ?? 0.15));
 }
 
-export function runSprintMonteCarlo(entries: SprintEntry[], iterations = 1000): SimulationOutcome[] {
+function entryPerformance(entry: CompetitionEntry): number {
+  if (typeof entry.actualPerformance === "number") {
+    return entry.actualPerformance;
+  }
+
+  const value = randomNormal(entry.seedPerformance, entry.stdDev ?? 0.15);
+  return entry.higherIsBetter ? Math.max(0, value) : Math.max(0.01, value);
+}
+
+export function runCompetitionMonteCarlo(entries: CompetitionEntry[], iterations = 1000): CompetitionOutcome[] {
   if (entries.length < 2) {
     throw new Error("At least two entries are required for simulation.");
   }
@@ -37,37 +71,72 @@ export function runSprintMonteCarlo(entries: SprintEntry[], iterations = 1000): 
       wins: 0,
       podiums: 0,
       placeSum: 0,
-      timeSum: 0
+      performanceSum: 0,
+      placeCounts: Array.from({ length: entries.length }, () => 0),
+      performances: [],
     });
   });
 
   for (let i = 0; i < iterations; i += 1) {
-    const race = entries
+    const contest = entries
       .map((entry) => ({
         athleteName: entry.athleteName,
-        simulatedTime: entryTime(entry)
+        performance: entryPerformance(entry),
+        higherIsBetter: entry.higherIsBetter,
       }))
-      .sort((a, b) => a.simulatedTime - b.simulatedTime);
+      .sort((a, b) => (a.higherIsBetter ? b.performance - a.performance : a.performance - b.performance));
 
-    race.forEach((result, idx) => {
+    contest.forEach((result, idx) => {
       const place = idx + 1;
       const athleteStats = stats.get(result.athleteName);
       if (!athleteStats) return;
       athleteStats.placeSum += place;
-      athleteStats.timeSum += result.simulatedTime;
+      athleteStats.performanceSum += result.performance;
+      athleteStats.placeCounts[place - 1] += 1;
+      athleteStats.performances.push(result.performance);
       if (place === 1) athleteStats.wins += 1;
       if (place <= 3) athleteStats.podiums += 1;
     });
   }
 
   return Array.from(stats.values())
-    .map((stat) => ({
-      athleteName: stat.athleteName,
-      teamName: stat.teamName,
-      winProbability: stat.wins / iterations,
-      podiumProbability: stat.podiums / iterations,
-      expectedPlace: stat.placeSum / iterations,
-      averageTime: stat.timeSum / iterations
-    }))
+    .map((stat) => {
+      const sortedPerformances = [...stat.performances].sort((a, b) => a - b);
+      return {
+        athleteName: stat.athleteName,
+        teamName: stat.teamName,
+        winProbability: stat.wins / iterations,
+        podiumProbability: stat.podiums / iterations,
+        expectedPlace: stat.placeSum / iterations,
+        mostLikelyPlace: mostLikelyPlace(stat.placeCounts),
+        averagePerformance: stat.performanceSum / iterations,
+        performanceIntervalLow: percentile(sortedPerformances, 0.025),
+        performanceIntervalHigh: percentile(sortedPerformances, 0.975),
+      };
+    })
     .sort((a, b) => b.winProbability - a.winProbability);
+}
+
+export function runSprintMonteCarlo(entries: SprintEntry[], iterations = 1000): SimulationOutcome[] {
+  return runCompetitionMonteCarlo(
+    entries.map((entry) => ({
+      athleteName: entry.athleteName,
+      teamName: entry.teamName,
+      seedPerformance: entry.seedTime,
+      stdDev: entry.stdDev,
+      actualPerformance: typeof entry.actualTime === "number" ? entry.actualTime : undefined,
+      higherIsBetter: false,
+    })),
+    iterations,
+  ).map((result) => ({
+    athleteName: result.athleteName,
+    teamName: result.teamName,
+    winProbability: result.winProbability,
+    podiumProbability: result.podiumProbability,
+    expectedPlace: result.expectedPlace,
+    mostLikelyPlace: result.mostLikelyPlace,
+    averageTime: result.averagePerformance,
+    timeIntervalLow: result.performanceIntervalLow,
+    timeIntervalHigh: result.performanceIntervalHigh,
+  }));
 }

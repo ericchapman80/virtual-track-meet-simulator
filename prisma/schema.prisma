@@ -104,3 +104,115 @@ model SimulationResult {
 
   @@unique([runId, athleteId, eventId])
 }
+
+model RankingsSnapshot {
+  id         String               @id @default(cuid())
+  label      String?
+  sourceUrl  String               @unique
+  state      String
+  level      String
+  season     String
+  year       String?
+  accuracy   String?
+  grade      String?
+  league     String?
+  capturedAt DateTime             @default(now())
+  totalEvents Int
+  trackedAthletes String[]
+  eventGroups RankingsEventGroup[]
+  createdAt  DateTime             @default(now())
+
+  @@index([state, level, season, capturedAt])
+}
+
+model RankingsEventGroup {
+  id         String           @id @default(cuid())
+  snapshotId String
+  snapshot   RankingsSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  section    String
+  event      String
+  eventUrl   String
+  sortOrder  Int
+  entries    RankingsEntry[]
+
+  @@index([snapshotId, sortOrder])
+}
+
+model RankingsEntry {
+  id           String             @id @default(cuid())
+  eventGroupId String
+  eventGroup   RankingsEventGroup @relation(fields: [eventGroupId], references: [id], onDelete: Cascade)
+  rank         Int
+  mark         String
+  wind         String?
+  athlete      String
+  athleteUrl   String?
+  team         String?
+  teamUrl      String?
+  grade        String?
+  meet         String?
+  meetUrl      String?
+  place        String?
+  date         String?
+
+  @@index([eventGroupId, rank])
+  @@index([athlete])
+}
+
+model HistorySimulationJob {
+  id                String   @id @default(cuid())
+  status            String
+  progressMessage   String?
+  progressCurrent   Int?
+  progressTotal     Int?
+  requestPayload    Json
+  resultPayload     Json?
+  errorMessage      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  completedAt       DateTime?
+  athletes          HistorySimulationJobAthlete[]
+
+  @@index([status, createdAt])
+}
+
+model HistorySimulationJobAthlete {
+  id                    String               @id @default(cuid())
+  jobId                  String
+  job                    HistorySimulationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  sortOrder              Int
+  requestedName          String
+  teamHint               String?
+  status                 String
+  resolvedName           String?
+  athleteUrl             String?
+  team                   String?
+  confidence             String?
+  personalRecord         Float?
+  previousSeasonAverage  Float?
+  seasonAverage          Float?
+  allTimeAverage         Float?
+  seedPerformance        Float?
+  seedBasis              String?
+  stdDev                 Float?
+  notes                  String[]
+  reason                 String?
+  searchMatches          Json?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([jobId, sortOrder])
+  @@unique([jobId, sortOrder])
+}
+
+model ManagedAthlete {
+  id                 String   @id @default(cuid())
+  name               String
+  teamHint           String?
+  state              String?
+  milesplitAthleteUrl String  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([name])
+}

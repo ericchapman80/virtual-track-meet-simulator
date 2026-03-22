@@ -1,136 +1,78 @@
-"use client";
+import Link from "next/link";
 
-import { FormEvent, useState } from "react";
-import { SimulationOutcome, SprintEntry } from "@/types/simulation";
-
-const defaultEntries: SprintEntry[] = [
-  { athleteName: "Athlete A", teamName: "Team Red", seedTime: 10.89, stdDev: 0.12 },
-  { athleteName: "Athlete B", teamName: "Team Blue", seedTime: 10.95, stdDev: 0.15 },
-  { athleteName: "Athlete C", teamName: "Team Green", seedTime: 11.02, stdDev: 0.1 },
-  { athleteName: "Athlete D", teamName: "Team Gold", seedTime: 11.1, stdDev: 0.16 }
+const pages = [
+  {
+    href: "/simulator",
+    eyebrow: "Simulation",
+    title: "Meet and Event Simulator",
+    description:
+      "Run Monte Carlo planning scenarios, seed events from MileSplit history, and review projected places with confidence intervals.",
+  },
+  {
+    href: "/rankings",
+    eyebrow: "Rankings",
+    title: "Rankings Tracker and Stored Watch",
+    description:
+      "Pull top-10 event lists, ingest ranking snapshots, and compare Riley or Karter against the latest stored view.",
+  },
+  {
+    href: "/athletes",
+    eyebrow: "Directory",
+    title: "My Athletes",
+    description:
+      "Store exact MileSplit athlete profile URLs for your team so duplicate names resolve cleanly across future runs.",
+  },
+  {
+    href: "/api-tools",
+    eyebrow: "Testing",
+    title: "API Tools",
+    description:
+      "Inspect endpoints, send requests, and export responses as JSON or CSV from the built-in request console.",
+  },
 ];
 
-const liveMeetExample: SprintEntry[] = [
-  { athleteName: "Athlete A", teamName: "Team Red", seedTime: 10.89, stdDev: 0.12, actualTime: 10.84 },
-  { athleteName: "Athlete B", teamName: "Team Blue", seedTime: 10.95, stdDev: 0.15 },
-  { athleteName: "Athlete C", teamName: "Team Green", seedTime: 11.02, stdDev: 0.1 },
-  { athleteName: "Athlete D", teamName: "Team Gold", seedTime: 11.1, stdDev: 0.16 }
-];
-
-export default function Home() {
-  const [iterations, setIterations] = useState(1000);
-  const [entriesJson, setEntriesJson] = useState(JSON.stringify(defaultEntries, null, 2));
-  const [results, setResults] = useState<SimulationOutcome[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setError(null);
-
-    try {
-      const entries = JSON.parse(entriesJson) as SprintEntry[];
-      const response = await fetch("/api/simulate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entries, iterations })
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "Failed to run simulation");
-      }
-
-      setResults(data.results as SimulationOutcome[]);
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Invalid request");
-    }
-  };
-
+export default function HomePage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-6">
-      <h1 className="text-3xl font-bold">Virtual Track Meet Simulator</h1>
-      <p className="text-slate-700">
-        Use this in two modes: pre-meet planning (seedTime/stdDev only) and live meet projection (add
-        <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">actualTime</code>
-        for completed athletes as results come in).
-      </p>
+    <main className="app-shell flex flex-col gap-6">
+      <header className="panel p-6 sm:p-8">
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+          <div className="grid gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Virtual Track Meet Simulator</p>
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-6xl">
+              Choose a focused workspace.
+            </h1>
+            <p className="max-w-3xl text-sm leading-6 text-muted sm:text-base">
+              The app is split into dedicated pages now so simulation, rankings, and athlete identity
+              management each have room to breathe on desktop and mobile.
+            </p>
+          </div>
+          <div className="panel-strong grid gap-3 p-4 sm:p-5">
+            <p className="text-sm font-semibold">Recommended flow</p>
+            <ol className="grid gap-2 text-sm text-muted">
+              <li>1. Save Riley, Karter, and repeat athletes in My Athletes.</li>
+              <li>2. Run history-based event simulations in Simulator.</li>
+              <li>3. Track ranking movement and stored snapshots in Rankings.</li>
+            </ol>
+          </div>
+        </div>
+      </header>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setEntriesJson(JSON.stringify(defaultEntries, null, 2))}
-          className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm"
-        >
-          Load planning example
-        </button>
-        <button
-          type="button"
-          onClick={() => setEntriesJson(JSON.stringify(liveMeetExample, null, 2))}
-          className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm"
-        >
-          Load live meet example
-        </button>
-      </div>
-
-      <form onSubmit={onSubmit} className="grid gap-4 rounded-lg border bg-white p-4 shadow-sm">
-        <label className="grid gap-1">
-          <span className="font-medium">Iterations</span>
-          <input
-            type="number"
-            min={100}
-            step={100}
-            value={iterations}
-            onChange={(e) => setIterations(Number(e.target.value))}
-            className="rounded border px-3 py-2"
-          />
-        </label>
-
-        <label className="grid gap-1">
-          <span className="font-medium">Entries JSON</span>
-          <textarea
-            value={entriesJson}
-            onChange={(e) => setEntriesJson(e.target.value)}
-            rows={16}
-            className="rounded border px-3 py-2 font-mono text-sm"
-          />
-        </label>
-
-        <button type="submit" className="w-fit rounded bg-slate-900 px-4 py-2 font-medium text-white">
-          Run simulation
-        </button>
-      </form>
-
-      {error ? <p className="rounded border border-red-300 bg-red-50 p-3 text-red-700">{error}</p> : null}
-
-      {results.length > 0 ? (
-        <section className="overflow-x-auto rounded-lg border bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-xl font-semibold">Results</h2>
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2">Athlete</th>
-                <th className="py-2">Team</th>
-                <th className="py-2">Win %</th>
-                <th className="py-2">Podium %</th>
-                <th className="py-2">Expected Place</th>
-                <th className="py-2">Avg Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((row) => (
-                <tr key={row.athleteName} className="border-b last:border-0">
-                  <td className="py-2">{row.athleteName}</td>
-                  <td className="py-2">{row.teamName ?? "-"}</td>
-                  <td className="py-2">{(row.winProbability * 100).toFixed(1)}%</td>
-                  <td className="py-2">{(row.podiumProbability * 100).toFixed(1)}%</td>
-                  <td className="py-2">{row.expectedPlace.toFixed(2)}</td>
-                  <td className="py-2">{row.averageTime.toFixed(3)}s</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      ) : null}
+      <section className="grid gap-4 md:grid-cols-2">
+        {pages.map((page) => (
+          <Link key={page.href} href={page.href} className="panel group p-5 transition hover:-translate-y-0.5">
+            <div className="grid gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">{page.eyebrow}</p>
+              <div className="grid gap-2">
+                <h2 className="text-2xl font-semibold">{page.title}</h2>
+                <p className="text-sm leading-6 text-muted">{page.description}</p>
+              </div>
+              <span className="text-sm font-medium" style={{ color: "var(--primary)" }}>
+                Open workspace
+              </span>
+            </div>
+          </Link>
+        ))}
+      </section>
     </main>
   );
 }
