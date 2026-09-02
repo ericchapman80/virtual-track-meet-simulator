@@ -15,6 +15,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # local env files
+.env.local
 .env*.local
 .env
 
@@ -24,6 +25,11 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright local traces and collected data
+.playwright-cli/
+output/playwright/*
+!output/playwright/.gitkeep
 
 # misc
 .DS_Store

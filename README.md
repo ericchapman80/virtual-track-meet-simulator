@@ -9,6 +9,14 @@ A Next.js + TypeScript starter for running Monte Carlo simulations for track mee
 - Prisma ORM
 - PostgreSQL (recommended free tier: Neon)
 
+## Local setup (first time on macOS)
+
+Install core toolchain from `Brewfile`:
+
+```bash
+brew bundle
+```
+
 ## Quick start
 
 1. Install dependencies:
